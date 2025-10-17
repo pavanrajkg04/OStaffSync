@@ -8,6 +8,7 @@ class AdminState(LoginState):
     company_name = LoginState.company_name
     tenant_id = LoginState.tenant_id
     dashboard_filter: str = ""
+    
 
 
 

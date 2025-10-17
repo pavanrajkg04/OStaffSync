@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS departments (
 # Attendance table
 con.execute("""
 CREATE TABLE IF NOT EXISTS attendance (
-    attendance_id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
     user_id TEXT NOT NULL REFERENCES users(user_id),
     date DATE NOT NULL,
@@ -132,72 +131,72 @@ CREATE TABLE IF NOT EXISTS recruitment (
 # 2. Insert Sample Data
 # ----------------------------
 
-tenant_id = str(uuid.uuid4())
-company_name = "Acme Corp"
+# tenant_id = str(uuid.uuid4())
+# company_name = "Acme Corp"
 
-con.execute(
-    "INSERT INTO tenants VALUES (?, ?, ?, ?, ?)",
-    [tenant_id, company_name, "acme.io", "premium", datetime.now()],
-)
+# con.execute(
+#     "INSERT INTO tenants VALUES (?, ?, ?, ?, ?)",
+#     [tenant_id, company_name, "acme.io", "premium", datetime.now()],
+# )
 
-# Sample users
-user1 = str(uuid.uuid4())
-user2 = str(uuid.uuid4())
+# # Sample users
+# user1 = str(uuid.uuid4())
+# user2 = str(uuid.uuid4())
 
-con.execute(
-    "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [user1, tenant_id, company_name, "Alice", "alice@acme.io", "Engineer", "active", datetime.now()],
-)
-con.execute(
-    "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [user2, tenant_id, company_name, "Bob", "bob@acme.io", "HR", "active", datetime.now()],
-)
+# con.execute(
+#     "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+#     [user1, tenant_id, company_name, "Alice", "alice@acme.io", "Engineer", "active", datetime.now()],
+# )
+# con.execute(
+#     "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+#     [user2, tenant_id, company_name, "Bob", "bob@acme.io", "HR", "active", datetime.now()],
+# )
 
-# Sample department
-dept_id = str(uuid.uuid4())
-con.execute("INSERT INTO departments VALUES (?, ?, ?, ?)", [dept_id, tenant_id, "Engineering", user1])
+# # Sample department
+# dept_id = str(uuid.uuid4())
+# con.execute("INSERT INTO departments VALUES (?, ?, ?, ?)", [dept_id, tenant_id, "Engineering", user1])
 
-# Sample attendance
-att_id = str(uuid.uuid4())
-con.execute(
-    "INSERT INTO attendance VALUES (?, ?, ?, ?, ?, ?, ?)",
-    [att_id, tenant_id, user1, date.today(), "present", datetime.now(), None],
-)
+# # Sample attendance
+# att_id = str(uuid.uuid4())
+# con.execute(
+#     "INSERT INTO attendance VALUES (?, ?, ?, ?, ?, ?, ?)",
+#     [att_id, tenant_id, user1, date.today(), "present", datetime.now(), None],
+# )
 
-# Sample leave
-leave_id = str(uuid.uuid4())
-con.execute(
-    "INSERT INTO leaves VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [leave_id, tenant_id, user2, "Sick Leave", date.today(), date.today(), "approved", datetime.now()],
-)
+# # Sample leave
+# leave_id = str(uuid.uuid4())
+# con.execute(
+#     "INSERT INTO leaves VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+#     [leave_id, tenant_id, user2, "Sick Leave", date.today(), date.today(), "approved", datetime.now()],
+# )
 
-# Sample payroll
-payroll_id = str(uuid.uuid4())
-con.execute(
-    "INSERT INTO payroll VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [payroll_id, tenant_id, user1, "2025-10", 5000.0, 500.0, 4500.0, datetime.now()],
-)
+# # Sample payroll
+# payroll_id = str(uuid.uuid4())
+# con.execute(
+#     "INSERT INTO payroll VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+#     [payroll_id, tenant_id, user1, "2025-10", 5000.0, 500.0, 4500.0, datetime.now()],
+# )
 
-# Sample logins
-login1_id = str(uuid.uuid4())
-login2_id = str(uuid.uuid4())
-con.execute(
-    "INSERT INTO logins VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [login1_id, tenant_id, user1, "alice", "alice123", None, 0, False, datetime.now()],
-)
-con.execute(
-    "INSERT INTO logins VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [login2_id, tenant_id, user2, "bob", "bob123", None, 0, False, datetime.now()],
-)
+# # Sample logins
+# login1_id = str(uuid.uuid4())
+# login2_id = str(uuid.uuid4())
+# con.execute(
+#     "INSERT INTO logins VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+#     [login1_id, tenant_id, user1, "alice", "alice123", None, 0, False, datetime.now()],
+# )
+# con.execute(
+#     "INSERT INTO logins VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+#     [login2_id, tenant_id, user2, "bob", "bob123", None, 0, False, datetime.now()],
+# )
 
-# ----------------------------
-# 3. Test Query
-# ----------------------------
-users_df = con.execute(
-    "SELECT name, company_name, email, role FROM users WHERE tenant_id = ?", [tenant_id]
-).fetch_df()
-print(users_df)
+# # ----------------------------
+# # 3. Test Query
+# # ----------------------------
+# users_df = con.execute(
+#     "SELECT name, company_name, email, role FROM users WHERE tenant_id = ?", [tenant_id]
+# ).fetch_df()
+# print(users_df)
 
-con.close()
+# con.close()
 
-print("\n✅ DuckDB HRMS setup complete with company_name included.")
+# print("\n✅ DuckDB HRMS setup complete with company_name included.")

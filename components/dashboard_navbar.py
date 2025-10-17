@@ -14,7 +14,7 @@ def navbar():
         
         # Right: Navigation Links
         rx.hstack(
-            rx.link("Logout", href="/logout", color="black", font_size="1.1", padding_x="2", _hover={
+            rx.link("Logout", href="/login", color="black", font_size="1.1", padding_x="2", _hover={
                 "color": "#2563EB",
                 "transform": "scale(1.05)",
                 "transition": "all 0.3s ease-in-out",
