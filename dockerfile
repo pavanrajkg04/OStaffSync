@@ -1,34 +1,38 @@
-# Use Python 3.12 slim as base (matches your traceback)
+# Use official Python base image
 FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PATH="/root/.local/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies: curl (for downloading Bun), unzip (to extract it)
+# Install required system packages
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
+    git \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Bun (Reflex will use this instead of trying to install it at runtime)
-RUN curl -fsSL https://bun.sh/install | bash
+# Copy the application code
+COPY . /app
 
-# Add Bun to PATH
-ENV PATH="/root/.bun/bin:${PATH}"
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install uv
+RUN uv pip install -r requirements.txt
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install reflex --upgrade
+# Build Reflex app
+RUN uv run reflex init
 
-# Copy the rest of your app
-COPY . .
+# Optional: upgrade Reflex to latest stable
+RUN uv pip install reflex --upgrade
 
-# Build the app (optional but recommended for prod)
-RUN reflex export --no-zip
+# Expose default Reflex port
+EXPOSE 3000
 
-# Expose backend port
-EXPOSE 3000 8000
-
-# Run in production mode
-CMD ["reflex", "run", "--env", "prod"]
+# Start Reflex production server
+CMD ["uv", "run", "reflex", "run", "--env", "prod"]
