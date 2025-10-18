@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8'?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>http://localhost:3000/</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/login</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/register</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/dashboard</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/employees</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/attendance</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/payroll</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/empdashboard</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/empleaves</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/emppayrole</loc>
+  </url>
+</urlset>
