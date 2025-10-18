@@ -15,7 +15,7 @@ class LoginState(rx.State):
     username: str = ""
     password: str = ""
     message: str = ""
-
+    role: str = ""
     tenant_id: str = ""
     user_id: str = ""
     session_id: str = ""
@@ -33,6 +33,9 @@ class LoginState(rx.State):
 
     def set_message(self, value: str):
         self.message = value
+    
+    def set_role(self, value:str):
+        self.role = value
 
     def logout_user(self):
         """Clear session and redirect to login."""
@@ -40,6 +43,7 @@ class LoginState(rx.State):
         self.username = ""
         self.password = ""
         self.user_id = ""
+        self.role = ""
         self.tenant_id = ""
         self.session_id = ""
         self.full_name = ""
@@ -66,7 +70,7 @@ class LoginState(rx.State):
             # Validate credentials
             user = conn.execute(
                 """
-                SELECT u.user_id, u.name
+                SELECT u.user_id, u.name,u.role
                 FROM logins l
                 JOIN users u ON l.user_id = u.user_id
                 WHERE l.username = ? AND l.password = ? AND l.tenant_id = ?
@@ -81,6 +85,7 @@ class LoginState(rx.State):
             # Set session info
             self.user_id = user[0]
             self.full_name = user[1]
+            self.role = user[2]
             self.session_id = str(uuid.uuid4())
 
             # Update last login
@@ -90,7 +95,10 @@ class LoginState(rx.State):
             )
 
             self.message = f"✅ Welcome back, {self.full_name}!"
-            return rx.redirect("/dashboard")
+            if self.role !='admin':
+                return rx.redirect("/empdashboard")
+            else:
+                return rx.redirect("/dashboard")
 
         except Exception as e:
             self.message = f"❌ Error: {str(e)}"

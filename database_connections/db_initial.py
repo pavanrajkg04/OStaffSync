@@ -47,10 +47,11 @@ CREATE TABLE IF NOT EXISTS departments (
 # Attendance table
 con.execute("""
 CREATE TABLE IF NOT EXISTS attendance (
+
     tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
     user_id TEXT NOT NULL REFERENCES users(user_id),
     date DATE NOT NULL,
-    status TEXT CHECK(status IN ('present', 'absent', 'leave', 'remote')),
+    status TEXT CHECK(status IN ('present', 'absent', 'Half day', 'leave', 'remote')),
     check_in TIMESTAMP,
     check_out TIMESTAMP
 )
@@ -80,7 +81,8 @@ CREATE TABLE IF NOT EXISTS payroll (
     gross_salary DOUBLE,
     deductions DOUBLE,
     net_salary DOUBLE,
-    processed_at TIMESTAMP DEFAULT NOW()
+    processed_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(tenant_id, user_id, month)
 )
 """)
 

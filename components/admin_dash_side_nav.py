@@ -87,9 +87,9 @@ def Sidebar():
             sidebar_item("Dashboard", "layout-dashboard", "/dashboard"),
             sidebar_item("Employees", "users", "/employees"),
             sidebar_item("Attendance", "calendar", "/attendance"),
-            sidebar_item("Performance", "bar-chart-3", "/performance"),
+            #sidebar_item("Performance", "bar-chart-3", "/performance"),
             sidebar_item("Payroll", "wallet", "/payroll"),
-            sidebar_item("Settings", "settings", "/settings"),
+            #sidebar_item("Settings", "settings", "/settings"),
 
             rx.spacer(),
             sidebar_bottom_profile(),
