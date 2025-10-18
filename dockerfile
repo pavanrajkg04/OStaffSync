@@ -19,6 +19,7 @@ ENV PATH="/root/.bun/bin:${PATH}"
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install reflex --upgrade
 
 # Copy the rest of your app
 COPY . .
