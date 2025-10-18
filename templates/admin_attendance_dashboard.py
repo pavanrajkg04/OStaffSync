@@ -39,12 +39,12 @@ def metric_card(icon_tag: str, value: rx.Var | str | int | float, label: str, co
     )
 
 
-# ---------- ATTENDANCE DASHBOARD STATE ----------
+# ---------- ATTENDANCE DASHBOARD AttendanceDashboardState ----------
 class AttendanceDashboardState(admin_dash_side_nav.AdminState):
     date_selected: str = date.today().strftime("%Y-%m-%d")
     attendance_data: list[dict] = []
 
-    selected_user_id: int | None = None
+    selected_user_id: str | None = None
     selected_user_name: str = ""
     monthly_attendance: list[dict] = []
 
@@ -76,6 +76,14 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
     def monthly_header(self) -> str:
         return f"Monthly Attendance for {self.selected_user_name or '—'} - {self.current_month}"
 
+    @rx.var
+    def employee_options(self) -> list[dict]:
+        """Precomputed list for select dropdown: avoids reactive expression in value."""
+        return [
+            {"label": emp["name"], "value": str(emp["user_id"])}
+            for emp in self.attendance_data
+        ]
+
     # ----------------- Lifecycle / Actions -----------------
     def on_mount(self):
         self.load_attendance()
@@ -88,15 +96,17 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
         self.monthly_attendance = []
         self.load_attendance()
 
-    def set_selected_user_id(self, value):
+    def set_selected_user_id(self, value: str):
+        print(f"valur {value}")
         try:
             if value is None or value == "":
                 self.selected_user_id = None
                 self.selected_user_name = ""
                 self.monthly_attendance = []
                 return
-            user_id = int(value)
+            user_id = str(value)
         except Exception:
+            print("exception handeled")
             self.selected_user_id = None
             self.selected_user_name = ""
             self.monthly_attendance = []
@@ -104,6 +114,7 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
 
         self.selected_user_id = user_id
         for emp in self.attendance_data:
+            print(f"emp {emp}")
             if emp.get("user_id") == user_id:
                 self.selected_user_name = emp.get("name", "")
                 break
@@ -231,6 +242,7 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
         print(f"[LOAD] {len(data)} employees loaded for {target_date} (present: {present_count})")
 
     def get_monthly_attendance(self):
+        print("fetching monthly data")
         if not getattr(self, "tenant_id", None) or not self.selected_user_id:
             self.monthly_attendance = []
             return
@@ -312,7 +324,6 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
             """,
             (self.tenant_id,)
         ).fetchall()
-
         data = []
         for r in rows:
             leave_id, user_id, ltype, start_date, end_date, status, requested_at = r
@@ -333,7 +344,6 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
             })
 
         self.leave_requests = data
-        print(f"[LEAVES] Loaded {len(data)} pending requests")
 
     def approve_leave(self, leave_id: str):
         conn.execute(
@@ -351,20 +361,21 @@ class AttendanceDashboardState(admin_dash_side_nav.AdminState):
 
 
 # ---------- UI COMPONENTS ----------
-def attendance_metric_cards(state: AttendanceDashboardState):
+def attendance_metric_cards():
     return rx.hstack(
-        metric_card("users", state.total_employees, "Total Employees", "blue"),
-        metric_card("check_check", state.present_today, "Present Today", "green"),
-        metric_card("message_circle_warning", state.absent_today, "Absent Today", "red"),
-        metric_card("clock", state.attendance_rate, "Attendance %", "teal"),
+        metric_card("users", AttendanceDashboardState.total_employees, "Total Employees", "blue"),
+        metric_card("check_check", AttendanceDashboardState.present_today, "Present Today", "green"),
+        metric_card("message_circle_warning", AttendanceDashboardState.absent_today, "Absent Today", "red"),
+        metric_card("clock", AttendanceDashboardState.attendance_rate, "Attendance %", "teal"),
+        
         spacing="6",
         wrap="wrap",
     )
 
 
-def attendance_table(state: AttendanceDashboardState):
+def attendance_table():
     return rx.cond(
-        ~state.attendance_data,
+        ~AttendanceDashboardState.attendance_data,
         rx.text("No attendance data for this date.", font_size="2xl", py="6", text_align="center"),
         rx.table.root(
             rx.table.header(
@@ -379,7 +390,7 @@ def attendance_table(state: AttendanceDashboardState):
             ),
             rx.table.body(
                 rx.foreach(
-                    state.attendance_data,
+                    AttendanceDashboardState.attendance_data,
                     lambda emp: rx.table.row(
                         rx.table.row_header_cell(emp["name"]),
                         rx.table.cell(emp["email"]),
@@ -404,24 +415,27 @@ def attendance_table(state: AttendanceDashboardState):
     )
 
 
-def monthly_attendance_section(state: AttendanceDashboardState):
+def monthly_attendance_section():
     return rx.vstack(
+        # Employee select dropdown
         rx.cond(
-            state.attendance_data,
+            AttendanceDashboardState.attendance_data,
             rx.hstack(
                 rx.text("Select an employee to view monthly attendance:"),
                 rx.select.root(
                     rx.select.trigger(placeholder="Choose an employee..."),
                     rx.select.content(
-                        rx.select.group(
-                            rx.foreach(
-                                state.attendance_data,
-                                lambda emp: rx.select.item(emp["name"], value=str(emp["user_id"]))
-                            )
+                        rx.foreach(
+                            AttendanceDashboardState.employee_options,
+                            lambda opt: rx.select.item(opt["label"], value=opt["value"])
                         )
                     ),
-                    value=rx.cond(state.selected_user_id, state.selected_user_id.to_string(), ""),
-                    on_change=lambda val: state.set_selected_user_id(val),
+                    value=rx.cond(
+                        AttendanceDashboardState.selected_user_id,
+                        AttendanceDashboardState.selected_user_id.to_string(),
+                        "",
+                    ),
+                    on_change=AttendanceDashboardState.set_selected_user_id,
                     width="260px",
                 ),
                 spacing="4",
@@ -429,71 +443,82 @@ def monthly_attendance_section(state: AttendanceDashboardState):
             ),
             rx.text("No employees available to filter."),
         ),
+        # Monthly attendance table
         rx.cond(
-            state.selected_user_id,
+            AttendanceDashboardState.selected_user_id,
             rx.vstack(
-                rx.heading(state.monthly_header, size="4", mb="4"),
+                rx.heading(AttendanceDashboardState.monthly_header, size="4", mb="4"),
                 rx.cond(
-                    ~state.monthly_attendance,
+                    ~AttendanceDashboardState.monthly_attendance,
                     rx.text("No attendance data available.", font_size="lg", py="4", text_align="center"),
-                    rx.table.root(
-                        rx.table.header(
-                            rx.table.row(
-                                rx.table.column_header_cell("Date", width="140px"),
-                                rx.table.column_header_cell("Check-in", width="120px"),
-                                rx.table.column_header_cell("Check-out", width="120px"),
-                                rx.table.column_header_cell("Status", width="120px"),
-                            )
-                        ),
-                        rx.table.body(
-                            rx.foreach(
-                                state.monthly_attendance,
-                                lambda day: rx.table.row(
-                                    rx.table.cell(day["date"]),
-                                    rx.table.cell(day["check_in"]),
-                                    rx.table.cell(day["check_out"]),
-                                    rx.table.cell(
-                                        day["status"],
-                                        color=rx.cond(day["status"] == "Present", "green",
-                                                      rx.cond(day["status"] == "Half day", "orange", "red")),
-                                    ),
-                                    _hover={"bg": "gray.50"}
+                    # Scrollable container
+                    rx.box(
+                        rx.table.root(
+                            rx.table.header(
+                                rx.table.row(
+                                    rx.table.column_header_cell("Date", width="140px"),
+                                    rx.table.column_header_cell("Check-in", width="120px"),
+                                    rx.table.column_header_cell("Check-out", width="120px"),
+                                    rx.table.column_header_cell("Status", width="120px"),
                                 )
-                            )
+                            ),
+                            rx.table.body(
+                                rx.foreach(
+                                    AttendanceDashboardState.monthly_attendance,
+                                    lambda day: rx.table.row(
+                                        rx.table.cell(day["date"]),
+                                        rx.table.cell(day["check_in"]),
+                                        rx.table.cell(day["check_out"]),
+                                        rx.table.cell(
+                                            day["status"],
+                                            color=rx.cond(
+                                                day["status"] == "Present",
+                                                "green",
+                                                rx.cond(day["status"] == "Half day", "orange", "red")
+                                            ),
+                                        ),
+                                        _hover={"bg": "gray.50"}
+                                    )
+                                )
+                            ),
+                            width="100%",
                         ),
-                        width="100%",
+                        overflow_x="auto",       # horizontal scroll
+                        overflow_y="auto",       # vertical scroll if too many rows
+                        max_height="400px",      # adjust max height
                         border="1px solid",
                         border_color="gray.200",
                         border_radius="md",
-                        overflow_x="auto",
                     )
                 ),
                 spacing="2",
                 mt="6",
             ),
-            rx.text("Select an employee to view monthly attendance.", font_size="lg", py="4")
+            rx.text("Select an employee to view monthly attendance.", font_size="lg", py="4"),
         ),
         spacing="4",
         mt="4",
     )
 
 
-def attendance_report_section(state: AttendanceDashboardState):
+
+
+def attendance_report_section():
     return rx.vstack(
         rx.heading("Attendance Report Generator", size="4", mb="4"),
         rx.hstack(
             rx.text("Start Date:"),
-            rx.input(type="date", value=state.start_date, on_change=state.set_start_date, width="160px"),
+            rx.input(type="date", value=AttendanceDashboardState.start_date, on_change=AttendanceDashboardState.set_start_date, width="160px"),
             rx.text("End Date:"),
-            rx.input(type="date", value=state.end_date, on_change=state.set_end_date, width="160px"),
-            rx.button("Generate Report", on_click=state.generate_report, color_scheme="blue"),
+            rx.input(type="date", value=AttendanceDashboardState.end_date, on_change=AttendanceDashboardState.set_end_date, width="160px"),
+            rx.button("Generate Report", on_click=AttendanceDashboardState.generate_report, color_scheme="blue"),
             spacing="4",
             align="center",
         ),
         rx.cond(
-            state.show_report,
+            AttendanceDashboardState.show_report,
             rx.vstack(
-                rx.heading(rx.text("Attendance Report: ", state.start_date, " to ", state.end_date), size="3", mb="3"),
+                rx.heading(rx.text("Attendance Report: ", AttendanceDashboardState.start_date, " to ", AttendanceDashboardState.end_date), size="3", mb="3"),
                 rx.table.root(
                     rx.table.header(
                         rx.table.row(
@@ -508,7 +533,7 @@ def attendance_report_section(state: AttendanceDashboardState):
                     ),
                     rx.table.body(
                         rx.foreach(
-                            state.report_data,
+                            AttendanceDashboardState.report_data,
                             lambda rep: rx.table.row(
                                 rx.table.row_header_cell(rep["name"]),
                                 rx.table.cell(rep["email"]),
@@ -544,11 +569,12 @@ def attendance_report_section(state: AttendanceDashboardState):
     )
 
 
-def leave_requests_section(state: AttendanceDashboardState):
+def leave_requests_section():
     return rx.vstack(
         rx.heading("Pending Leave Requests", size="4", mb="4"),
+        
         rx.cond(
-            ~state.leave_requests,
+            ~AttendanceDashboardState.leave_requests,
             rx.text("No pending leave requests.", py="4", font_size="lg", text_align="center"),
             rx.table.root(
                 rx.table.header(
@@ -563,7 +589,7 @@ def leave_requests_section(state: AttendanceDashboardState):
                 ),
                 rx.table.body(
                     rx.foreach(
-                        state.leave_requests,
+                        AttendanceDashboardState.leave_requests,
                         lambda leave: rx.table.row(
                             rx.table.row_header_cell(leave["user_name"]),
                             rx.table.cell(leave["type"]),
@@ -573,9 +599,9 @@ def leave_requests_section(state: AttendanceDashboardState):
                             rx.table.cell(
                                 rx.hstack(
                                     rx.button("Approve", color_scheme="green",
-                                              on_click=lambda l=leave["leave_id"]: state.approve_leave(l)),
+                                              on_click=lambda _, l=leave["leave_id"]: AttendanceDashboardState.approve_leave(l)),
                                     rx.button("Reject", color_scheme="red",
-                                              on_click=lambda l=leave["leave_id"]: state.reject_leave(l)),
+                                              on_click=lambda _, l=leave["leave_id"]: AttendanceDashboardState.reject_leave(l)),
                                     spacing="2"
                                 )
                             ),
@@ -600,8 +626,6 @@ def leave_requests_section(state: AttendanceDashboardState):
 
 # ---------- PAGE ----------
 def attendance_dashboard_page() -> rx.Component:
-    state = AttendanceDashboardState
-
     return rx.vstack(
         dashboard_navbar.navbar(),
         rx.hstack(
@@ -609,23 +633,24 @@ def attendance_dashboard_page() -> rx.Component:
             rx.box(
                 rx.vstack(
                     rx.hstack(
-                        rx.text("Attendance Dashboard - ", state.formatted_date, font_size="2xl", font_weight="bold"),
+                        rx.text("Attendance Dashboard - ", AttendanceDashboardState.formatted_date, font_size="2xl", font_weight="bold"),
                         rx.spacer(),
-                        rx.input(type="date", value=state.date_selected, on_change=state.on_date_change, width="200px"),
+                        rx.input(type="date", value=AttendanceDashboardState.date_selected, on_change=AttendanceDashboardState.on_date_change, width="200px"),
                         spacing="4",
                         align="center",
+                        on_mount=AttendanceDashboardState.on_mount,
                     ),
-                    attendance_metric_cards(state),
-                    attendance_table(state),
-                    monthly_attendance_section(state),
-                    attendance_report_section(state),
-                    leave_requests_section(state),  # ✅ New leave section
+                    attendance_metric_cards(),
+                    attendance_table(),
+                    monthly_attendance_section(),
+                    attendance_report_section(),
+                    leave_requests_section(),
                     spacing="6",
                     p="6",
                 ),
                 width="100%",
-                height="100vh",
-                overflow_y="auto",
+                height="100vh",           # fit viewport
+                overflow_y="auto",        # scroll vertically if content exceeds
             ),
             spacing="4",
             align="start",

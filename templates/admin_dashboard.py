@@ -265,11 +265,11 @@ class AdminDashboardState(admin_dash_side_nav.AdminState):
 def dashboard_page() -> rx.Component:
     """Main HR Admin Dashboard layout."""
     cards = [
-        metric_card("users", AdminDashboardState.Total_Employees, "Total Employees", "▲ 2.4%", "blue"),
-        metric_card("user-plus", AdminDashboardState.New_Hires, "New Hires (This Month)", "▲ 8.3%", "green"),
+        metric_card("users", AdminDashboardState.Total_Employees, "Total Employees", "▲ 0%", "blue"),
+        metric_card("user-plus", AdminDashboardState.New_Hires, "New Hires (This Month)", "▲ 0%", "green"),
         metric_card("user-x", AdminDashboardState.Attrition, "Attrition", "▼ 1.1%", "red"),
-        metric_card("calendar", AdminDashboardState.Leave_Requests, "Leave Requests", "▲ 6.1%", "purple"),
-        metric_card("clock", AdminDashboardState.Attendance_Rate, "Attendance Rate %", "▲ 1.2%", "teal"),
+        metric_card("calendar", AdminDashboardState.Leave_Requests, "Leave Requests", "▲ 0%", "purple"),
+        metric_card("clock", AdminDashboardState.Attendance_Rate, "Attendance Rate %", "▲ 0%", "teal"),
     ]
 
     top_left_section = rx.hstack(
