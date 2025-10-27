@@ -406,6 +406,7 @@ dependencies = [
     { name = "duckdb" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "reflex-hosting-cli" },
     { name = "reflex-motion" },
 ]
 
@@ -414,6 +415,7 @@ requires-dist = [
     { name = "duckdb", specifier = ">=1.4.1" },
     { name = "numpy", specifier = ">=2.3.3" },
     { name = "pandas", specifier = ">=2.3.3" },
+    { name = "reflex-hosting-cli", specifier = ">=0.1.56" },
     { name = "reflex-motion", specifier = ">=0.0.1" },
 ]
 

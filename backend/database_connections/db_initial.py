@@ -2,11 +2,15 @@ import duckdb
 import uuid
 from datetime import datetime, date
 
+# --------------------------------------------------------
+# HRMS + TASK MANAGEMENT DATABASE SCHEMA (DuckDB)
+# --------------------------------------------------------
+
 # Connect to DuckDB (creates file if not exists)
 con = duckdb.connect("hrms.duckdb")
 
 # ----------------------------
-# 1. Create Tables
+# 1. Core HRMS Tables
 # ----------------------------
 
 # Tenants table (represents companies)
@@ -47,7 +51,6 @@ CREATE TABLE IF NOT EXISTS departments (
 # Attendance table
 con.execute("""
 CREATE TABLE IF NOT EXISTS attendance (
-
     tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
     user_id TEXT NOT NULL REFERENCES users(user_id),
     date DATE NOT NULL,
@@ -101,8 +104,7 @@ CREATE TABLE IF NOT EXISTS logins (
 )
 """)
 
-
-#Performance table
+# Performance table
 con.execute("""
 CREATE TABLE IF NOT EXISTS performance (
     performance_id TEXT PRIMARY KEY,
@@ -115,7 +117,7 @@ CREATE TABLE IF NOT EXISTS performance (
 )
 """)
 
-#Recruitment table
+# Recruitment table
 con.execute("""
 CREATE TABLE IF NOT EXISTS recruitment (
     candidate_id TEXT PRIMARY KEY,
@@ -128,77 +130,82 @@ CREATE TABLE IF NOT EXISTS recruitment (
 )
 """)
 
+# ----------------------------
+# 2. Task Management Module
+# ----------------------------
+
+# Tasks table (core)
+con.execute("""
+CREATE TABLE IF NOT EXISTS tasks (
+    task_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    created_by TEXT NOT NULL REFERENCES users(user_id),
+    assigned_to TEXT REFERENCES users(user_id),
+    title TEXT NOT NULL,
+    description TEXT,
+    category TEXT,
+    priority TEXT CHECK(priority IN ('low', 'medium', 'high', 'urgent')) DEFAULT 'medium',
+    status TEXT CHECK(status IN ('todo', 'in_progress', 'review', 'done')) DEFAULT 'todo',
+    due_date DATE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+)
+""")
+
+# Task comments (for discussions/chat)
+con.execute("""
+CREATE TABLE IF NOT EXISTS task_comments (
+    comment_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    user_id TEXT NOT NULL REFERENCES users(user_id),
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+)
+""")
+
+# Subtasks (smaller units of work)
+con.execute("""
+CREATE TABLE IF NOT EXISTS subtasks (
+    subtask_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    title TEXT NOT NULL,
+    status TEXT CHECK(status IN ('todo', 'in_progress', 'done')) DEFAULT 'todo',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+)
+""")
+
+# Task attachments (optional file uploads)
+con.execute("""
+CREATE TABLE IF NOT EXISTS task_attachments (
+    attachment_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    uploaded_by TEXT REFERENCES users(user_id),
+    file_name TEXT,
+    file_path TEXT,
+    uploaded_at TIMESTAMP DEFAULT NOW()
+)
+""")
+
+# Activity log (optional change tracking)
+con.execute("""
+CREATE TABLE IF NOT EXISTS activity_log (
+    log_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    user_id TEXT REFERENCES users(user_id),
+    task_id TEXT REFERENCES tasks(task_id),
+    action TEXT,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+)
+""")
 
 # ----------------------------
-# 2. Insert Sample Data
+# 3. Confirmation
 # ----------------------------
 
-# tenant_id = str(uuid.uuid4())
-# company_name = "Acme Corp"
-
-# con.execute(
-#     "INSERT INTO tenants VALUES (?, ?, ?, ?, ?)",
-#     [tenant_id, company_name, "acme.io", "premium", datetime.now()],
-# )
-
-# # Sample users
-# user1 = str(uuid.uuid4())
-# user2 = str(uuid.uuid4())
-
-# con.execute(
-#     "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-#     [user1, tenant_id, company_name, "Alice", "alice@acme.io", "Engineer", "active", datetime.now()],
-# )
-# con.execute(
-#     "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-#     [user2, tenant_id, company_name, "Bob", "bob@acme.io", "HR", "active", datetime.now()],
-# )
-
-# # Sample department
-# dept_id = str(uuid.uuid4())
-# con.execute("INSERT INTO departments VALUES (?, ?, ?, ?)", [dept_id, tenant_id, "Engineering", user1])
-
-# # Sample attendance
-# att_id = str(uuid.uuid4())
-# con.execute(
-#     "INSERT INTO attendance VALUES (?, ?, ?, ?, ?, ?, ?)",
-#     [att_id, tenant_id, user1, date.today(), "present", datetime.now(), None],
-# )
-
-# # Sample leave
-# leave_id = str(uuid.uuid4())
-# con.execute(
-#     "INSERT INTO leaves VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-#     [leave_id, tenant_id, user2, "Sick Leave", date.today(), date.today(), "approved", datetime.now()],
-# )
-
-# # Sample payroll
-# payroll_id = str(uuid.uuid4())
-# con.execute(
-#     "INSERT INTO payroll VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-#     [payroll_id, tenant_id, user1, "2025-10", 5000.0, 500.0, 4500.0, datetime.now()],
-# )
-
-# # Sample logins
-# login1_id = str(uuid.uuid4())
-# login2_id = str(uuid.uuid4())
-# con.execute(
-#     "INSERT INTO logins VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-#     [login1_id, tenant_id, user1, "alice", "alice123", None, 0, False, datetime.now()],
-# )
-# con.execute(
-#     "INSERT INTO logins VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-#     [login2_id, tenant_id, user2, "bob", "bob123", None, 0, False, datetime.now()],
-# )
-
-# # ----------------------------
-# # 3. Test Query
-# # ----------------------------
-# users_df = con.execute(
-#     "SELECT name, company_name, email, role FROM users WHERE tenant_id = ?", [tenant_id]
-# ).fetch_df()
-# print(users_df)
-
-# con.close()
-
-# print("\n✅ DuckDB HRMS setup complete with company_name included.")
+print("\n✅ DuckDB HRMS setup complete with Task Management module integrated.")
+con.close()
