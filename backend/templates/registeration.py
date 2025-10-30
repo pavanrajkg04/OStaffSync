@@ -12,7 +12,7 @@ class RegisterState(rx.State):
     company_name: str = ""
     name: str = ""
     email: str = ""
-    role: str = "Employee"
+    role: str = "admin"
     username: str = ""
     password: str = ""
     message: str = ""
