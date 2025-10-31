@@ -128,6 +128,70 @@ CREATE TABLE IF NOT EXISTS recruitment (
 )
 """)
 
+# Create tasks table
+con.execute("""
+CREATE TABLE IF NOT EXISTS tasks (
+    task_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    title TEXT NOT NULL,
+    description TEXT,
+    created_by TEXT NOT NULL REFERENCES users(user_id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    due_date DATE,
+    priority TEXT CHECK(priority IN ('low', 'medium', 'high')) DEFAULT 'medium'
+)
+""")
+
+# Create task_assignments table
+con.execute("""
+CREATE TABLE IF NOT EXISTS task_assignments (
+    assignment_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    user_id TEXT NOT NULL REFERENCES users(user_id),
+    status TEXT CHECK(status IN ('todo', 'inprogress', 'need_inputs', 'done')) DEFAULT 'todo',
+    assigned_at TIMESTAMP DEFAULT NOW()
+)
+""")
+
+# Create task_status_history table
+con.execute("""
+CREATE TABLE IF NOT EXISTS task_status_history (
+    status_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    user_id TEXT NOT NULL REFERENCES users(user_id),
+    previous_status TEXT,
+    new_status TEXT CHECK(new_status IN ('todo', 'inprogress', 'need_inputs', 'done')),
+    changed_at TIMESTAMP DEFAULT NOW(),
+    notes TEXT
+)
+""")
+
+# Create task_messages table
+con.execute("""
+CREATE TABLE IF NOT EXISTS task_messages (
+    message_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    sender_id TEXT NOT NULL REFERENCES users(user_id),
+    message TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT NOW()
+)
+""")
+
+# Create task_transfers table
+con.execute("""
+CREATE TABLE IF NOT EXISTS task_transfers (
+    transfer_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(task_id),
+    from_user_id TEXT NOT NULL REFERENCES users(user_id),
+    to_user_id TEXT NOT NULL REFERENCES users(user_id),
+    transfer_date TIMESTAMP DEFAULT NOW(),
+    notes TEXT
+)
+""")
+
+print("✅ Setup of task management tables complete.")
+
 
 # ----------------------------
 # 2. Insert Sample Data
