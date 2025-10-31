@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS task_transfers (
 )
 """)
 
-print("✅ Setup of task management tables complete.")
+print("✅ DB setup complete.")
 
 
 # ----------------------------
